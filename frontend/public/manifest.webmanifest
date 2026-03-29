@@ -1,0 +1,16 @@
+{
+  "name": "SmartTable OS",
+  "short_name": "SmartTable",
+  "description": "Restaurant operating system for QR ordering, admin, kitchen, analytics, and loyalty.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f1720",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

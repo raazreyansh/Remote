@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic
+python-dotenv
+openai
+pymupdf
+requests
+beautifulsoup4
+playwright
+sentence-transformers
