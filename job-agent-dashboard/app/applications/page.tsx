@@ -8,10 +8,20 @@ import { type Application, getApplications } from "@/lib/api";
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   async function refresh() {
-    const items = await getApplications(status);
-    setApplications(items);
+    try {
+      setLoading(true);
+      setError("");
+      const items = await getApplications(status);
+      setApplications(items);
+    } catch (refreshError) {
+      setError(refreshError instanceof Error ? refreshError.message : "Unable to load applications.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -42,6 +52,18 @@ export default function ApplicationsPage() {
           </div>
         </div>
       </div>
+      {error ? (
+        <div className="notice notice-error">
+          <h3 className="notice-title">Could not load applications</h3>
+          <p className="notice-copy">{error}</p>
+        </div>
+      ) : null}
+      {loading ? (
+        <div className="notice">
+          <h3 className="notice-title">Refreshing applications</h3>
+          <p className="notice-copy">Loading the latest pipeline activity from the backend.</p>
+        </div>
+      ) : null}
       <ApplicationsTable applications={applications} onUpdated={refresh} />
     </section>
   );

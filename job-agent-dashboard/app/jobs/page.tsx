@@ -11,16 +11,26 @@ export default function JobsPage() {
   const [source, setSource] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   async function refresh() {
-    const data = await getAllJobs({
-      page,
-      pageSize: 20,
-      minScore: threshold,
-      source,
-    });
-    setJobs(data.items);
-    setTotal(data.total);
+    try {
+      setLoading(true);
+      setError("");
+      const data = await getAllJobs({
+        page,
+        pageSize: 20,
+        minScore: threshold,
+        source,
+      });
+      setJobs(data.items);
+      setTotal(data.total);
+    } catch (refreshError) {
+      setError(refreshError instanceof Error ? refreshError.message : "Unable to load jobs.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -79,6 +89,18 @@ export default function JobsPage() {
           </div>
         </div>
       </div>
+      {error ? (
+        <div className="notice notice-error">
+          <h3 className="notice-title">Could not load jobs</h3>
+          <p className="notice-copy">{error}</p>
+        </div>
+      ) : null}
+      {loading ? (
+        <div className="notice">
+          <h3 className="notice-title">Refreshing jobs</h3>
+          <p className="notice-copy">Loading the current ranked list from the backend.</p>
+        </div>
+      ) : null}
       <JobsTable jobs={jobs} onApplied={refresh} />
     </section>
   );

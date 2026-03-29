@@ -33,7 +33,7 @@ export function JobsTable({
 
   return (
     <div className="stack">
-      {message ? <div className="panel">{message}</div> : null}
+      {message ? <div className="notice notice-success">{message}</div> : null}
       <div className="table-wrap">
         <table className="table">
           <thead>
@@ -56,6 +56,7 @@ export function JobsTable({
                 <td>{job.company}</td>
                 <td>
                   <span className="score-pill">{job.final_score.toFixed(2)}</span>
+                  <div className="metric-note">semantic {job.semantic_score.toFixed(1)}</div>
                 </td>
                 <td>
                   <div className="button-row">

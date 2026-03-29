@@ -12,16 +12,26 @@ export default function DashboardPage() {
   const [topJobs, setTopJobs] = useState<Job[]>([]);
   const [threshold, setThreshold] = useState(70);
   const [source, setSource] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   async function refresh() {
-    const [analyticsData, readyData, topData] = await Promise.all([
-      getAnalytics(),
-      getReadyToApply(threshold, source),
-      getTopJobs(threshold),
-    ]);
-    setAnalytics(analyticsData);
-    setReadyJobs(readyData);
-    setTopJobs(topData.slice(0, 5));
+    try {
+      setLoading(true);
+      setError("");
+      const [analyticsData, readyData, topData] = await Promise.all([
+        getAnalytics(),
+        getReadyToApply(threshold, source),
+        getTopJobs(threshold),
+      ]);
+      setAnalytics(analyticsData);
+      setReadyJobs(readyData);
+      setTopJobs(topData.slice(0, 5));
+    } catch (refreshError) {
+      setError(refreshError instanceof Error ? refreshError.message : "Unable to load dashboard data.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -30,6 +40,22 @@ export default function DashboardPage() {
 
   return (
     <div className="stack">
+      {error ? (
+        <section className="panel notice notice-error">
+          <h2 className="notice-title">Backend unreachable</h2>
+          <p className="notice-copy">
+            The dashboard could not load data from the API. Check `NEXT_PUBLIC_API_BASE_URL`, confirm the backend is
+            awake, then refresh.
+          </p>
+          <p className="notice-meta">{error}</p>
+        </section>
+      ) : null}
+      {loading ? (
+        <section className="panel notice">
+          <h2 className="notice-title">Loading workspace</h2>
+          <p className="notice-copy">Pulling analytics, ready-to-apply jobs, and the latest ranked queue.</p>
+        </section>
+      ) : null}
       <AnalyticsCards analytics={analytics} />
       <div className="hero">
         <section className="panel">
