@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 
 import { AnalyticsCards } from "@/components/analytics-cards";
+import { IntakePanel } from "@/components/intake-panel";
 import { JobsTable } from "@/components/jobs-table";
-import { type Analytics, type Job, getAnalytics, getReadyToApply, getTopJobs } from "@/lib/api";
+import { type Analytics, type Job, type Profile, getAnalytics, getProfile, getReadyToApply, getTopJobs } from "@/lib/api";
 
 export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [readyJobs, setReadyJobs] = useState<Job[]>([]);
   const [topJobs, setTopJobs] = useState<Job[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [threshold, setThreshold] = useState(70);
   const [source, setSource] = useState("");
   const [loading, setLoading] = useState(true);
@@ -19,14 +21,16 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       setError("");
-      const [analyticsData, readyData, topData] = await Promise.all([
+      const [analyticsData, readyData, topData, profileData] = await Promise.all([
         getAnalytics(),
         getReadyToApply(threshold, source),
         getTopJobs(threshold),
+        getProfile(),
       ]);
       setAnalytics(analyticsData);
       setReadyJobs(readyData);
       setTopJobs(topData.slice(0, 5));
+      setProfile(profileData);
     } catch (refreshError) {
       setError(refreshError instanceof Error ? refreshError.message : "Unable to load dashboard data.");
     } finally {
@@ -40,6 +44,7 @@ export default function DashboardPage() {
 
   return (
     <div className="stack">
+      <IntakePanel profile={profile} onProfileChange={setProfile} onRefreshComplete={refresh} />
       {error ? (
         <section className="panel notice notice-error">
           <h2 className="notice-title">Backend unreachable</h2>

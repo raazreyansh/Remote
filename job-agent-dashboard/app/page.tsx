@@ -1,78 +1,102 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+import { IntakePanel } from "@/components/intake-panel";
+import { type Profile, getProfile } from "@/lib/api";
 
 export default function HomePage() {
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        setProfile(await getProfile());
+      } catch {
+        setProfile(null);
+      }
+    }
+
+    void loadProfile();
+  }, []);
+
   return (
     <div className="stack">
       <section className="hero hero-home panel">
         <div className="hero-copy">
-          <div className="eyebrow">System Overview</div>
-          <h2 className="section-title hero-title">A focused job search workspace with fewer tabs and better signals.</h2>
+          <div className="eyebrow">Resume To Role Match</div>
+          <h2 className="section-title hero-title">Upload once, fetch fresh remote jobs, and act on the best-fit roles.</h2>
           <p className="hero-text">
-            Review ranked roles, see what is actually ready to submit, and keep your search organized without drowning in
-            spreadsheets or scattered notes.
+            This web app parses your resume, builds a profile, pulls jobs from ATS sources and remote-job sites, scores
+            them for fit, and hands you direct apply targets instead of endless browsing.
           </p>
           <div className="button-row">
             <Link className="button" href="/dashboard">
-              Open Dashboard
+              Open Matching Dashboard
             </Link>
             <Link className="button secondary" href="/jobs">
-              Browse Jobs
+              See Ranked Jobs
             </Link>
           </div>
           <div className="hero-metrics">
             <div className="hero-metric">
-              <span>Signal-first</span>
-              <strong>Ranked ATS targets</strong>
+              <span>Resume intake</span>
+              <strong>PDF upload + AI profile extraction</strong>
             </div>
             <div className="hero-metric">
-              <span>Action-ready</span>
-              <strong>Apply flow handoff</strong>
+              <span>Fresh sourcing</span>
+              <strong>Remote listings + ATS job sources</strong>
             </div>
             <div className="hero-metric">
-              <span>Pipeline clarity</span>
-              <strong>Status tracking built in</strong>
+              <span>Action mode</span>
+              <strong>Direct apply where available</strong>
             </div>
           </div>
         </div>
         <div className="hero-visual">
           <div className="spotlight-card spotlight-main">
-            <div className="spotlight-label">Daily Priority</div>
-            <h3>Ready to apply</h3>
-            <p>Surface the high-score direct ATS roles that are worth your attention today.</p>
+            <div className="spotlight-label">How it works</div>
+            <h3>Upload. Refresh. Apply.</h3>
+            <p>
+              Start with your resume, sync the latest remote jobs, then work from the highest-confidence matches first.
+            </p>
           </div>
           <div className="spotlight-grid">
             <div className="spotlight-card">
-              <div className="spotlight-label">Job Intake</div>
-              <p>Score incoming roles by skill match, semantics, and source quality.</p>
+              <div className="spotlight-label">Matching</div>
+              <p>Skills, role fit, semantics, and location signals combine into a ranked queue.</p>
             </div>
             <div className="spotlight-card">
-              <div className="spotlight-label">Applications</div>
-              <p>Track blocked, manual, and applied states without losing momentum.</p>
+              <div className="spotlight-label">Apply flow</div>
+              <p>Open the job fast and trigger direct-apply flows for ATS-friendly targets.</p>
             </div>
           </div>
         </div>
       </section>
 
+      <IntakePanel profile={profile} onProfileChange={setProfile} />
+
       <section className="grid feature-grid">
         <article className="panel feature-card">
           <div className="feature-step">01</div>
-          <h3 className="feature-title">Rank what matters</h3>
+          <h3 className="feature-title">Parse the resume</h3>
           <p className="feature-copy">
-            Pull jobs into one place and sort them by strength instead of bouncing between ATS tabs and saved links.
+            Extract skills, experience, projects, and target roles into a profile the ranking engine can use.
           </p>
         </article>
         <article className="panel feature-card">
           <div className="feature-step">02</div>
-          <h3 className="feature-title">Act on the right set</h3>
+          <h3 className="feature-title">Pull latest remote jobs</h3>
           <p className="feature-copy">
-            Keep your ready-to-apply queue separate from low-confidence roles so daily effort stays sharp.
+            Fetch from remote job boards and direct ATS sources so the list stays current instead of going stale.
           </p>
         </article>
         <article className="panel feature-card">
           <div className="feature-step">03</div>
-          <h3 className="feature-title">Track outcomes cleanly</h3>
+          <h3 className="feature-title">Prioritize direct apply</h3>
           <p className="feature-copy">
-            Move applications through manual review, submission, and interview stages from one dashboard.
+            Focus on roles that best match your resume and surface direct apply opportunities wherever possible.
           </p>
         </article>
       </section>

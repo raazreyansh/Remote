@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import and_, or_, select
@@ -7,6 +8,8 @@ from sqlalchemy import and_, or_, select
 from backend.models.application import Application
 from backend.models.db import SessionLocal
 from backend.models.job import Job
+from backend.services.matching import calculate_match_score
+from backend.services.profile_service import load_profile
 
 ROLE_INCLUDE_PATTERNS = (
     "machine learning engineer",
@@ -23,6 +26,14 @@ ROLE_EXCLUDE_PATTERNS = ("staff", "principal", "lead")
 
 
 def _serialize_job(job: Job, plan_tier: str | None = None) -> dict[str, Any]:
+    age = datetime.utcnow() - job.created_at
+    if age <= timedelta(days=1):
+        freshness_bucket = "new_today"
+    elif age <= timedelta(days=7):
+        freshness_bucket = "this_week"
+    else:
+        freshness_bucket = "older"
+
     payload = {
         "id": job.id,
         "title": job.title,
@@ -37,11 +48,31 @@ def _serialize_job(job: Job, plan_tier: str | None = None) -> dict[str, Any]:
         "final_score": job.final_score,
         "ats_provider": job.ats_provider,
         "application_type": job.application_type,
+        "direct_apply": job.application_type == "direct",
+        "freshness_bucket": freshness_bucket,
         "created_at": job.created_at.isoformat(),
     }
     if plan_tier:
         payload["plan_tier"] = plan_tier
     return payload
+
+
+def _attach_fit_breakdown(job_payload: dict[str, Any], job: Job, profile: dict[str, Any] | None) -> dict[str, Any]:
+    if profile is None:
+        return job_payload
+
+    scores = calculate_match_score(job, profile)
+    job_payload["fit_breakdown"] = {
+        "skills_score": scores["skills_match_score"],
+        "experience_score": scores["experience_score"],
+        "role_score": scores["role_score"],
+        "location_score": scores["location_score"],
+        "semantic_score": scores["semantic_score"],
+        "final_score": scores["final_score"],
+        "embedding_source": scores["embedding_source"],
+        "score_explanation": scores["score_explanation"],
+    }
+    return job_payload
 
 
 def _is_target_role(job: Job) -> bool:
@@ -95,7 +126,13 @@ def _serialize_application(application: Application, job: Job | None) -> dict[st
     }
 
 
-def list_jobs(page: int = 1, page_size: int = 20, min_score: float | None = None, source: str | None = None) -> dict[str, Any]:
+def list_jobs(
+    page: int = 1,
+    page_size: int = 20,
+    min_score: float | None = None,
+    source: str | None = None,
+    direct_only: bool = False,
+) -> dict[str, Any]:
     offset = max(page - 1, 0) * page_size
     with SessionLocal() as session:
         query = select(Job)
@@ -107,6 +144,9 @@ def list_jobs(page: int = 1, page_size: int = 20, min_score: float | None = None
         if source:
             query = query.where(or_(Job.source == source, Job.ats_provider == source))
             count_query = count_query.where(or_(Job.source == source, Job.ats_provider == source))
+        if direct_only:
+            query = query.where(Job.application_type == "direct")
+            count_query = count_query.where(Job.application_type == "direct")
 
         total = len(session.execute(count_query).scalars().all())
         jobs = (
@@ -119,9 +159,16 @@ def list_jobs(page: int = 1, page_size: int = 20, min_score: float | None = None
 
 
 def get_job(job_id: int) -> dict[str, Any] | None:
+    try:
+        profile = load_profile()
+    except FileNotFoundError:
+        profile = None
+
     with SessionLocal() as session:
         job = session.get(Job, job_id)
-        return _serialize_job(job) if job else None
+        if job is None:
+            return None
+        return _attach_fit_breakdown(_serialize_job(job), job, profile)
 
 
 def get_top_jobs(threshold: float = 70.0) -> list[dict[str, Any]]:

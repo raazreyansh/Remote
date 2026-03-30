@@ -9,6 +9,7 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [threshold, setThreshold] = useState(70);
   const [source, setSource] = useState("");
+  const [directOnly, setDirectOnly] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,7 @@ export default function JobsPage() {
         pageSize: 20,
         minScore: threshold,
         source,
+        directOnly,
       });
       setJobs(data.items);
       setTotal(data.total);
@@ -35,14 +37,16 @@ export default function JobsPage() {
 
   useEffect(() => {
     void refresh();
-  }, [threshold, source, page]);
+  }, [threshold, source, directOnly, page]);
 
   return (
     <section className="panel">
       <div className="section-row">
         <div>
-          <h2 className="section-title">Jobs</h2>
-          <p className="subtitle">{total} jobs matched the current filters.</p>
+          <h2 className="section-title">Ranked Remote Roles</h2>
+          <p className="subtitle">
+            {total} jobs matched the current filters. Use this view as the operating queue, not a passive job list.
+          </p>
         </div>
         <div className="filters">
           <div className="field">
@@ -77,6 +81,20 @@ export default function JobsPage() {
               <option value="ashby">Ashby</option>
               <option value="RemoteOK">RemoteOK</option>
               <option value="WeWorkRemotely">WeWorkRemotely</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="jobs-direct">Apply Flow</label>
+            <select
+              id="jobs-direct"
+              value={directOnly ? "direct" : "all"}
+              onChange={(event) => {
+                setPage(1);
+                setDirectOnly(event.target.value === "direct");
+              }}
+            >
+              <option value="direct">Direct Apply Only</option>
+              <option value="all">All Jobs</option>
             </select>
           </div>
           <div className="button-row">

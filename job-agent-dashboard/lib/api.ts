@@ -3,10 +3,11 @@ export const API_BASE_URL = (
 ).replace(/\/$/, "");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const isFormData = init?.body instanceof FormData;
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(init?.headers ?? {}),
     },
     cache: "no-store",
@@ -33,7 +34,19 @@ export type Job = {
   final_score: number;
   ats_provider: string;
   application_type: string;
+  direct_apply: boolean;
+  freshness_bucket: string;
   created_at: string;
+  fit_breakdown?: {
+    skills_score: number;
+    experience_score: number;
+    role_score: number;
+    location_score: number;
+    semantic_score: number;
+    final_score: number;
+    embedding_source: string;
+    score_explanation: string;
+  };
 };
 
 export type Application = {
@@ -52,8 +65,56 @@ export type Analytics = {
   response_rate: number;
 };
 
+export type Profile = {
+  skills: string[];
+  experience: Array<Record<string, unknown> | string>;
+  projects: Array<Record<string, unknown> | string>;
+  education: Array<Record<string, unknown> | string>;
+  roles: string[];
+  preferred_locations?: string[];
+};
+
 export async function getAnalytics(): Promise<Analytics> {
   return request<Analytics>("/analytics");
+}
+
+export async function getProfile(): Promise<Profile | null> {
+  const data = await request<{ profile: Profile | null }>("/profile");
+  return data.profile;
+}
+
+export async function updateProfile(profile: Profile): Promise<{ profile: Profile; updated_jobs: number }> {
+  return request("/profile", {
+    method: "PATCH",
+    body: JSON.stringify(profile),
+  });
+}
+
+export async function uploadResume(file: File, preferredLocations = "Remote"): Promise<{
+  profile: Profile;
+  resume_path: string;
+  fetched_count: number;
+  new_jobs: number;
+  updated_jobs: number;
+}> {
+  const formData = new FormData();
+  formData.append("resume", file);
+  formData.append("preferred_locations", preferredLocations);
+  return request("/profile/upload-resume", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function refreshJobs(params?: {
+  directOnly?: boolean;
+  includeListingSites?: boolean;
+}): Promise<{ fetched_count: number; new_jobs: number; rescored_jobs: number }> {
+  const query = new URLSearchParams();
+  if (params?.directOnly) query.set("direct_only", "true");
+  if (params?.includeListingSites === false) query.set("include_listing_sites", "false");
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  return request(`/jobs/refresh${suffix}`, { method: "POST" });
 }
 
 export async function getTopJobs(threshold = 70): Promise<Job[]> {
@@ -73,13 +134,19 @@ export async function getAllJobs(params: {
   pageSize?: number;
   minScore?: number;
   source?: string;
+  directOnly?: boolean;
 }): Promise<{ items: Job[]; total: number; page: number; page_size: number }> {
   const query = new URLSearchParams();
   query.set("page", String(params.page ?? 1));
   query.set("page_size", String(params.pageSize ?? 20));
   if (params.minScore !== undefined) query.set("min_score", String(params.minScore));
   if (params.source) query.set("source", params.source);
+  if (params.directOnly) query.set("direct_only", "true");
   return request(`/jobs/all?${query.toString()}`);
+}
+
+export async function getJob(jobId: number): Promise<Job> {
+  return request<Job>(`/jobs/${jobId}`);
 }
 
 export async function getApplications(status = ""): Promise<Application[]> {

@@ -7,6 +7,7 @@ from backend.config import get_frontend_origins
 from backend.models.db import create_tables
 from backend.routes.applications import router as applications_router
 from backend.routes.jobs import router as jobs_router
+from backend.routes.profile import router as profile_router
 from backend.services.analytics_service import get_analytics_snapshot
 
 
@@ -27,6 +28,7 @@ app.add_middleware(
 )
 app.include_router(jobs_router)
 app.include_router(applications_router)
+app.include_router(profile_router)
 
 
 @app.get("/health")

@@ -213,9 +213,16 @@ def calculate_match_score(job: Job | dict[str, Any], profile: dict[str, Any]) ->
     return {
         "match_score": round(expanded_match_score, 2),
         "skills_match_score": round(_clamp(skills_score), 2),
+        "experience_score": round(_clamp(experience_score), 2),
+        "role_score": round(_clamp(role_score), 2),
+        "location_score": round(_clamp(location_score), 2),
         "semantic_score": round(semantic_score, 2),
         "final_score": round(expanded_final_score, 2),
         "embedding_source": embedding_source,
+        "score_explanation": (
+            f"Skills {skills_score:.1f}, experience {experience_score:.1f}, role {role_score:.1f}, "
+            f"location {location_score:.1f}, semantic {semantic_component:.1f}."
+        ),
     }
 
 

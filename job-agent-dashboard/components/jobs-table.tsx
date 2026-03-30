@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { type Job, triggerApply } from "@/lib/api";
@@ -72,6 +73,9 @@ export function JobsTable({
                 {showApply ? (
                   <td>
                     <div className="button-row">
+                      <Link className="button secondary" href={`/jobs/${job.id}`}>
+                        Details
+                      </Link>
                       <a className="button secondary" href={job.url} target="_blank" rel="noreferrer">
                         Open
                       </a>

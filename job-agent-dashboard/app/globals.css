@@ -36,7 +36,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -230,12 +231,18 @@ select {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   min-height: 42px;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--line);
   background: white;
+}
+
+.field textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
 .range-value {
@@ -451,6 +458,36 @@ select {
   min-height: 220px;
 }
 
+.intake-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.intake-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
+  gap: 18px;
+}
+
+.intake-upload,
+.intake-summary {
+  display: grid;
+  gap: 14px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 18px;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .notice {
   border-radius: 18px;
   border: 1px solid var(--line);
@@ -485,6 +522,13 @@ select {
   font-size: 14px;
 }
 
+.job-description {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
 .empty {
   padding: 30px 0;
   color: var(--muted);
@@ -498,7 +542,9 @@ select {
   .hero-home,
   .feature-grid,
   .hero-metrics,
-  .spotlight-grid {
+  .spotlight-grid,
+  .intake-grid,
+  .profile-grid {
     grid-template-columns: 1fr;
   }
 
